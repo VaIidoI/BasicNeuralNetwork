@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <random>
 #include <string>
@@ -171,54 +172,89 @@ private:
 	vector<vector<Neuron>> neurons; vector<double> biases, expectedOutputs;
 };
 
-void TrainNetwork(NeuralNetwork& network, vector<double> input, vector<double> output, int epochs) {
-	network.SetExpectedValues(input, output);
+vector<string> SplitString(const string input, const char delimiter) {
+	vector<std::string> ret;
 
-	for (int i = 0; i < epochs; i++) {
-		network.ForwardPropagate();
-		network.Backpropagate(0.1);
+	for (char c : input) {
+		if (c == delimiter) {
+			ret.emplace_back("");
+			continue;
+		}
+		if (ret.size() == 0) ret.emplace_back("");
+		ret[ret.size() - 1] += c;
 	}
-	cout << "done" << endl;
+
+	return ret;
+}
+
+
+pair<vector<vector<double>>, vector<vector<double>>> GetTrainingData(string fileName) {
+	vector<vector<double>> output; vector<vector<double>> input;
+
+	std::ifstream file(fileName);
+
+	if (file.is_open()) {
+		std::string line;
+		while (std::getline(file, line)) {
+			auto split = SplitString(line, ',');
+			output.emplace_back(vector<double>());
+			for (int i = 0; i < 8; i++) {
+				if (i == stoi(split[0]))
+					output.back().emplace_back(1.0);
+				else
+					output.back().emplace_back(0.0);
+			}
+			input.emplace_back(vector<double>());
+
+			for (int i = 1; i < split.size(); i++) {
+				input.back().emplace_back(stol(split[i]));
+			}
+		}
+		file.close();
+	}
+	else {
+		std::cerr << "Unable to open file" << std::endl;
+	}
+
+	return make_pair(input, output);
 }
 
 int main() {
 	srand(time(NULL));
-	vector<unsigned int> layerInfo = { 2, 24, 16, 10, 1 }; 
+	vector<unsigned int> layerInfo = { 3, 24, 16, 12, 8 }; 
 	NeuralNetwork network(layerInfo);
 
-	for (int i = 0; i < 100000; i++) {
-		network.SetExpectedValues(vector<double> {1, 1}, vector<double> { 0.0 });
-		network.ForwardPropagate();
-		network.Backpropagate(0.1);
+	auto trainData = GetTrainingData("lol.csv");
 
-		network.SetExpectedValues(vector<double> {1, 0}, vector<double> { 1.0 });
-		network.ForwardPropagate();
-		network.Backpropagate(0.1);
+	for (int i = 0; i < 1000; i++) {
+		auto inputs = trainData.first;
+		auto outputs = trainData.second;
 
-		network.SetExpectedValues(vector<double> {0, 0}, vector<double> { 0.0 });
-		network.ForwardPropagate();
-		network.Backpropagate(0.1);
-
-		network.SetExpectedValues(vector<double> {0, 1}, vector<double> { 1.0 });
-		network.ForwardPropagate();
-		network.Backpropagate(0.1);
+		for (int j = 0; j < outputs.size(); j++) {
+			network.SetExpectedValues(inputs[j], outputs[j]);
+			network.ForwardPropagate();
+			network.Backpropagate(0.05);
+		}
 	}
 
-	network.SetInput(vector<double> {0, 0});
-	network.ForwardPropagate();
-	network.PrintOutput();
+	auto testData = GetTrainingData("lol.csv");
 
-	network.SetInput(vector<double> {1, 0});
+	network.SetInput(vector<double> { 0, 0, 1 });
 	network.ForwardPropagate();
 	network.PrintOutput();
+	cout << "--------------------------------------" << endl;
 
-	network.SetInput(vector<double> {0, 1});
+	network.SetInput(vector<double> { 1, 0, 0 });
 	network.ForwardPropagate();
 	network.PrintOutput();
+	cout << "--------------------------------------" << endl;
 
-	network.SetInput(vector<double> {1, 1});
+	network.SetInput(vector<double> { 1, 1, 1 });
 	network.ForwardPropagate();
 	network.PrintOutput();
+	cout << "--------------------------------------" << endl;
+ 
+	
 	system("pause");
 	return 0;
 }

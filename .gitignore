@@ -433,5 +433,6 @@ FodyWeavers.xsd
 *.exe
 *.out
 *.app
+*.csv
 
 # End of https://www.toptal.com/developers/gitignore/api/c++
