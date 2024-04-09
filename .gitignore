@@ -433,7 +433,6 @@ FodyWeavers.xsd
 *.exe
 *.out
 *.app
-*.csv
 
 # Other Shit
 *.vcxproj

@@ -9,14 +9,12 @@
 #include <vector>
 #include <random>
 #include <string>
-#include <chrono>
 
 using std::vector;
 using std::string;
 using std::cout;
 using std::endl;
 using std::to_string;
-using namespace std::chrono;
 
 typedef vector<vector<double>> DoubleMatrix;
 
@@ -301,12 +299,7 @@ namespace bsn {
 	void TrainNetwork(NeuralNetwork& network, const DoubleMatrix inputs, const DoubleMatrix outputs, const int epochs, const double learningRate, const double decayRate) {
 		double rate = learningRate;
 
-		auto start = std::chrono::high_resolution_clock::now();
-
-
 		for (size_t i = 0; i < epochs; i++) {
-			//cout << "Epoch: " << i << endl;
-
 			for (size_t j = 0; j < outputs.size(); j++) {
 				network.SetExpectedValues(inputs[j], outputs[j]);
 				network.ForwardPropagate();
@@ -316,11 +309,6 @@ namespace bsn {
 
 			rate *= decayRate;
 		}
-
-		auto stop = std::chrono::high_resolution_clock::now();
-
-		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-		cout << "Learning with " << epochs << " epochs took " << duration << endl;
 	}
 
 	double GetSuccessRate(NeuralNetwork& network, const DoubleMatrix inputs, const DoubleMatrix outputs) {
