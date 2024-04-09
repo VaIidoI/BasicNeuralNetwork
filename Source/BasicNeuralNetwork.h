@@ -9,12 +9,14 @@
 #include <vector>
 #include <random>
 #include <string>
+#include <chrono>
 
 using std::vector;
 using std::string;
 using std::cout;
 using std::endl;
 using std::to_string;
+using namespace std::chrono;
 
 typedef vector<vector<double>> DoubleMatrix;
 
@@ -24,19 +26,19 @@ namespace bsn {
 	namespace functional {
 		class ActivationFunction {
 		public:
-			virtual double Function(double) = 0;
-			virtual double Derivative(double) = 0;
+			virtual double Function(double) const = 0;
+			virtual double Derivative(double) const = 0;
 		};
 
 		class Sigmoid : public ActivationFunction {
 		public:
 			Sigmoid() = default;
 
-			double Function(double x) {
+			double Function(double x) const {
 				return (1.0 / (1.0 + exp(-(x))));
 			}
 
-			double Derivative(double x) {
+			double Derivative(double x) const {
 				return (Function(x) * (1 - Function(x)));
 			}
 		};
@@ -45,11 +47,11 @@ namespace bsn {
 		public:
 			ReLU() = default;
 
-			double Function(double x) {
+			double Function(double x) const {
 				return ((x) > 0 ? (x) : 0.0);
 			}
 
-			double Derivative(double x) {
+			double Derivative(double x) const {
 				return ((x) > 0 ? 1.0 : 0.0);
 			}
 		};
@@ -58,11 +60,11 @@ namespace bsn {
 		public:
 			TanH() = default;
 
-			double Function(double x) {
+			double Function(double x) const {
 				return tanh(x);
 			}
 
-			double Derivative(double x) {
+			double Derivative(double x) const {
 				double th = tanh(x);
 				return 1.0 - th * th;
 			}
@@ -188,13 +190,14 @@ namespace bsn {
 			//First get the output error values
 			for (int i = 0; i < neurons.back().size(); i++) {
 				//Formula: (output - target) * derivative(output)
-				errors.back()[i] = (neurons.back()[i].value - expectedOutputs[i]) * f->Derivative(neurons.back()[i].value);
+				const double value = neurons.back()[i].value;
+				errors.back()[i] = (value - expectedOutputs[i]) * f->Derivative(value);
 			}
 
 			//Calculate error for each layer, we're working our way BACKwards
 			for (int i = neurons.size() - 2; i > 0; i--) { //layer
 				for (int j = 0; j < neurons[i].size(); j++) { //neuron
-					double derivative = f->Derivative(neurons[i][j].value);
+					const double derivative = f->Derivative(neurons[i][j].value);
 					double error = 0.0;
 
 					for (int k = 0; k < neurons[i][j].weights.size(); k++) { // weights 
@@ -272,6 +275,7 @@ namespace bsn {
 			return ret;
 		}
 
+		//Returns: The neural network in a formatted string
 		string ToString() const {
 			std::stringstream ss;
 			for (int i = 0; i < neurons.size(); i++) {
@@ -288,11 +292,6 @@ namespace bsn {
 			return ss.str();
 		}
 
-		void PrintOutput() {
-			for (int i = 0; i < neurons.back().size(); i++)
-				cout << "Neuron " << i << ": " << neurons.back()[i].value << endl;
-		}
-
 	private:
 		vector<vector<Neuron>> neurons; vector<double> expectedOutputs;
 		DoubleMatrix biases, errors;
@@ -302,8 +301,11 @@ namespace bsn {
 	void TrainNetwork(NeuralNetwork& network, const DoubleMatrix inputs, const DoubleMatrix outputs, const int epochs, const double learningRate, const double decayRate) {
 		double rate = learningRate;
 
+		auto start = std::chrono::high_resolution_clock::now();
+
+
 		for (size_t i = 0; i < epochs; i++) {
-			cout << "Epoch: " << i << endl;
+			//cout << "Epoch: " << i << endl;
 
 			for (size_t j = 0; j < outputs.size(); j++) {
 				network.SetExpectedValues(inputs[j], outputs[j]);
@@ -314,6 +316,11 @@ namespace bsn {
 
 			rate *= decayRate;
 		}
+
+		auto stop = std::chrono::high_resolution_clock::now();
+
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+		cout << "Learning with " << epochs << " epochs took " << duration << endl;
 	}
 
 	double GetSuccessRate(NeuralNetwork& network, const DoubleMatrix inputs, const DoubleMatrix outputs) {

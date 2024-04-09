@@ -8,7 +8,6 @@
 using namespace std;
 using namespace bsn;
 
-
 pair<DoubleMatrix, DoubleMatrix> GetAppleData(const string fileName) {
 	DoubleMatrix output; DoubleMatrix input;
 
@@ -43,13 +42,13 @@ pair<DoubleMatrix, DoubleMatrix> GetAppleData(const string fileName) {
 }
 
 int main() {
-	vector<unsigned int> layerInfo = { 7, 32, 8, 2 }; 
+	vector<unsigned int> layerInfo = { 7, 16, 8, 2 }; 
 	NeuralNetwork network(layerInfo);
-	network.LoadWeightsFromFile("apple.txt");
+	//network.LoadWeightsFromFile("apple.txt");
 	network.SetActivationFunction(new functional::ReLU());
 	auto trainData = GetAppleData("apple_quality.csv");
 
-	TrainNetwork(network, trainData.first, trainData.second, 300, 0.01, 0.995);
+	TrainNetwork(network, trainData.first, trainData.second, 250, 0.01, 0.995);
 
 	auto testData = GetAppleData("apple_test.csv");
 

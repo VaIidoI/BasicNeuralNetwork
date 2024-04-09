@@ -435,4 +435,9 @@ FodyWeavers.xsd
 *.app
 *.csv
 
+# Other Shit
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
 # End of https://www.toptal.com/developers/gitignore/api/c++
